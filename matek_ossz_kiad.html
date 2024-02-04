@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Matek - Összeadás és kivonás</title>
+    <style>
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #printArea,
+        #printArea * {
+          visibility: visible;
+        }
+        #printArea {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th,
+        td {
+          border: 1px solid black;
+          padding: 5px;
+          text-align: left;
+        }
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td,
+      th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+      }
+      tr:nth-child(even) {
+        background-color: #dddddd;
+      }
+      .backpackEmoji {
+        font-size: 3em; /* 3x nagyítás */
+      }
+      .chocolateEmoji {
+        font-size: 2em; /* 2x nagyítás */
+      }
+      .selectedCell {
+        border: 3px solid black; /* Vagy bármilyen szín, amit szeretnél */
+      }
+      #inputArea {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputRow {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 5px;
+}
+
+.inputRow label {
+    min-width: 210px; /* Állítsd be a leghosszabb címke szélességének megfelelően */
+}
+
+.inputRow input {
+    flex: 0 0 1px; /* Input mezők szélessége */
+}
+#instructions {
+  margin-bottom: 20px; /* vagy ahogy a többi elemhez illeszkedik */
+  padding: 10px;
+  background-color: #f9f9f9; /* enyhe háttérszín a kiemeléshez */
+  border-radius: 5px; /* kerekített sarkok a modern megjelenéshez */
+}
+
+#instructions h2 {
+  margin-top: 0;
+}
+
+#instructions ul {
+  list-style-type: disc; /* vagy bármilyen más stílus, amit szeretnél */
+  padding-left: 20px;
+}
+
+#instructions p {
+  font-size: 1rem; /* az olvashatóság érdekében */
+}
+
+
+    </style>
+  </head>
+  <body>
+    <h1>Matematika gyakorló - Összeadás és kivonás</h1>
+    <div id="instructions">
+        <h2>Használati útmutató</h2>
+        <p>
+          Az oldal segítségével összeadást és kivonást gyakoroló feladatokat tudsz generálni. Állítsd be a kívánt beállításokat az alábbiak szerint:
+        </p>
+        <ul>
+          <li><b>Legnagyobb használható szám:</b> Ez határozza meg, hogy milyen nagy számokkal végezhető el a művelet.</li>
+          <li><b>Maximális eredmény:</b> A művelet eredményének felső korlátja.</li>
+          <li><b>Feladatok száma:</b> A generált feladatok számát tudod itt beállítani.</li>
+          <li><b>Műveletek keverése:</b> Ha be van jelölve, akkor az összeadás és kivonás műveletek összekeverve jelennek meg.</li>
+        </ul>
+        <p>
+          A műveletek generálása után kattints bármelyik műveletre a táblázatban, hogy megjelenjen a vizualizációja. A <b>Generálás</b> gombra kattintva új feladatsor jön létre, míg a <b>Nyomtatás</b> gombra kattintva az aktuális feladatsor nyomtatható ki.
+        </p>
+      </div>
+      
+    <div id="inputArea">
+        <div class="inputRow">
+            <label for="maxOperand">Legnagyobb használható szám:</label>
+            <input type="number" id="maxOperand" value="50" />
+        </div>
+        <div class="inputRow">
+            <label for="maxResult">Maximális eredmény:</label>
+            <input type="number" id="maxResult" value="50" />
+        </div>
+        <div class="inputRow">
+            <label for="problemCount">Feladatok száma:</label>
+            <input type="number" id="problemCount" value="40" />
+        </div>
+        <div class="inputRow">
+            <label>Műveletek keverése:</label>
+            <input type="checkbox" id="mixOperations" checked />
+        </div>
+    </div>
+    <button onclick="generateOperations()">Generálás</button>
+    <button onclick="window.print()">Nyomtatás</button>
+
+    <div id="printArea">
+      <table id="problemsTable">
+        <!-- A feladatok itt jelennek meg -->
+      </table>
+    </div>
+    <div id="visualizationArea"></div>
+    <!-- Hely a vizualizáció számára -->
+
+    <script>
+      // Először megszerezzük a 'visualizationArea' div elemet
+      var visualizationArea = document.getElementById("visualizationArea");
+
+      // Ezután megszerezzük a 'printArea' div elemet, ahova át akarjuk helyezni a 'visualizationArea'-t
+      var printArea = document.getElementById("printArea");
+
+      // Végül áthelyezzük a 'visualizationArea'-t a 'printArea' div elembe
+      printArea.appendChild(visualizationArea);
+
+      function clearVisualization() {
+        document.getElementById("visualizationArea").innerHTML = "";
+      }
+
+      function visualizeOperation(a, b, operation) {
+        const visualizationArea = document.getElementById("visualizationArea");
+        clearVisualization(); // Töröljük az előző vizualizációkat
+
+        let visual = "";
+        let operationSymbol = operation === "add" ? "+" : "-";
+        let operationVisual = `<span style="font-size: 2em;"> ${operationSymbol} </span>`;
+        let equalsVisual = `<span style="font-size: 2em;"> = </span>`;
+
+        if (operation === "add") {
+          visual +=
+            createVisual(a, "🍫") +
+            operationVisual +
+            createVisual(b, "🍫") +
+            equalsVisual +
+            createVisual(a + b, "🍫");
+        } else {
+          visual +=
+            createVisual(Math.max(a, b), "🍫") +
+            operationVisual +
+            createVisual(Math.min(a, b), "🍫") +
+            equalsVisual +
+            createVisual(Math.max(a, b) - Math.min(a, b), "🍫");
+        }
+
+        visualizationArea.innerHTML =
+          visual +
+          '<div id="explanation" style="margin-top: 20px;">' +
+          "<p>🧳 - 10 darab csokit jelent</p>" +
+          "<p>🍫 - 1 darab csokit jelent</p>" +
+          "</div>";
+      }
+
+      function createVisual(number, icon) {
+        let bags = Math.floor(number / 10);
+        let pieces = number % 10;
+        let visual = "";
+
+        // 🧳 ikonok hozzáadása a megfelelő mérettel
+        if (bags > 0) {
+          visual += `<span style="font-size: 3em;">${"🧳".repeat(bags)}</span>`;
+        }
+
+        // 🍫 ikonok hozzáadása a megfelelő mérettel
+        if (pieces > 0) {
+          visual += `<span style="font-size: 2em;">${icon.repeat(
+            pieces
+          )}</span>`;
+        }
+
+        return visual;
+      }
+
+      function generateOperations() {
+        const maxOperand = parseInt(
+          document.getElementById("maxOperand").value
+        );
+        const maxResult = parseInt(document.getElementById("maxResult").value);
+        const problemCount = parseInt(
+          document.getElementById("problemCount").value
+        );
+        const mixOperations = document.getElementById("mixOperations").checked;
+        const problemsTable = document.getElementById("problemsTable");
+        let tableHTML = "<tr>";
+
+        for (let i = 0; i < problemCount; i++) {
+          let a, b, operation, problem;
+
+          do {
+            a = Math.floor(Math.random() * (maxOperand + 1));
+            b = Math.floor(Math.random() * (maxOperand + 1));
+            operation = mixOperations
+              ? Math.random() > 0.5
+                ? "add"
+                : "sub"
+              : i % 2 === 0
+              ? "add"
+              : "sub";
+          } while (
+            (operation === "add" && a + b > maxResult) ||
+            (operation === "sub" && a - b < 0)
+          );
+
+          if (operation === "add") {
+            problem = `${a} + ${b} = `;
+          } else {
+            problem = `${Math.max(a, b)} - ${Math.min(a, b)} = `;
+          }
+
+          tableHTML += `<td>${problem}</td>`;
+
+          if ((i + 1) % 4 === 0) {
+            tableHTML += "</tr><tr>";
+          }
+        }
+
+        // Remove the last empty <tr> if the number of problems is not a multiple of 4
+        if (problemCount % 4 !== 0) {
+          tableHTML += "</tr>";
+        }
+
+        problemsTable.innerHTML = tableHTML;
+      }
+
+      // Eseménykezelő hozzárendelése minden művelethez
+      document
+        .getElementById("problemsTable")
+        .addEventListener("click", function (e) {
+          if (e.target && e.target.nodeName === "TD") {
+            // Először távolítsuk el a 'selectedCell' osztályt az összes celláról
+            var cells = document.querySelectorAll("#problemsTable td");
+            cells.forEach(function (cell) {
+              cell.classList.remove("selectedCell");
+            });
+
+            // Hozzáadjuk a 'selectedCell' osztályt az aktuálisan kiválasztott cellához
+            e.target.classList.add("selectedCell");
+
+            // Folytatjuk a művelet vizualizálását, mint korábban
+            const parts = e.target.textContent.split(" ");
+            const a = parseInt(parts[0]);
+            const b = parseInt(parts[2]);
+            const operation = parts[1] === "+" ? "add" : "sub";
+            visualizeOperation(a, b, operation);
+          }
+        });
+
+          // Dokumentum szintű kattintás figyelő hozzáadása
+  document.addEventListener("click", function(e) {
+    const problemsTable = document.getElementById("problemsTable");
+    const clickedElement = e.target; // A kattintott elem
+    const isClickInsideTable = problemsTable.contains(clickedElement);
+
+    if (!isClickInsideTable) {
+      // Ha a kattintás a táblázaton kívül történt, eltávolítjuk a vizualizációt és a kijelölést
+      clearVisualization();
+      clearSelection();
+    }
+  });
+
+  function clearSelection() {
+    var cells = document.querySelectorAll("#problemsTable td");
+    cells.forEach(function(cell) {
+      cell.classList.remove("selectedCell");
+    });
+  }
+    </script>
+  </body>
+</html>
